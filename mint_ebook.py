@@ -23,7 +23,7 @@ from playwright_stealth import Stealth
 # =========================
 HEADLESS = False
 
-COOKIES_FILE = "cookies.json.encrypted"
+COOKIES_FILE = "claude/cookies.json.encrypted"
 EBOOK_IDEAS_FILE = "ebook_ideas.json"
 EBOOK_STATUS_FILE = "ebook_status.json"
 
