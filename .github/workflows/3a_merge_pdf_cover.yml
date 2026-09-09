@@ -1,0 +1,62 @@
+name: 3A. Merge PDF Cover
+
+on: 
+  workflow_dispatch: 
+  schedule:
+    - cron: '0 */2 * * *'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  run-merge-pdf-automation:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.PAT_TOKEN_ALL }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Pull Latest Changes (Maintain Persistence)
+      run: |
+        git pull --rebase
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pypdf pillow
+
+    - name: Run Merge PDF Cover Script
+      run: |
+        python merge_pdf_cover_2.py
+
+    - name: Commit and Push Merged PDF & Status
+      run: |
+        # Merged PDF aur status file ko track karein
+        git add ebook/ebook.pdf ebook_status.json
+        
+        if git diff --staged --quiet; then
+          echo "[INFO] No changes detected in ebook.pdf or status. Skipping push."
+        else
+          echo "[OK] Changes detected. Committing and pushing updates..."
+          git commit -m "Automated: Merge cover page into ebook.pdf and update status [skip ci]"
+          
+          # Conflict hone par workflow wali latest file ko preference di jayegi (-X theirs)
+          git pull origin ${GITHUB_REF_NAME} --rebase -X theirs || git rebase --skip
+          
+          git push origin ${GITHUB_REF_NAME}
+        fi

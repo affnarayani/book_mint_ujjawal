@@ -22,7 +22,7 @@ from playwright_stealth import Stealth
 # =========================
 # CONFIG
 # =========================
-HEADLESS = False  # Set to False to view browser UI directly
+HEADLESS = True
 
 KDP_COOKIES_FILE = Path("kdp/cookies.json.encrypted")
 STATUS_FILE = Path("ebook_status.json")
@@ -251,11 +251,11 @@ def run():
     print(f"--- Starting KDP Publishing Process (HEADLESS={HEADLESS}) ---", flush=True)
 
     status_data = load_status()
-    thumbnail_generated = get_status_value(status_data, "thumbnail_generated")
+    pdf_merged = get_status_value(status_data, "pdf_merged")
     kdp_uploaded = get_status_value(status_data, "kdp_uploaded")
 
-    if not thumbnail_generated:
-        print("[INFO] 'thumbnail_generated' is not True. Cannot upload to KDP yet. Exiting safely.", flush=True)
+    if not pdf_merged:
+        print("[INFO] 'pdf_merged' is not True. Cannot upload to KDP yet. Exiting safely.", flush=True)
         sys.exit(0)
 
     if kdp_uploaded is True:

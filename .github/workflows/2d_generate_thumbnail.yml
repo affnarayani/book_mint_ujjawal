@@ -1,0 +1,103 @@
+name: 2D. Generate Thumbnail
+
+on: 
+  workflow_dispatch: 
+  workflow_run:
+    workflows: ["2C. Generate Banner"]
+    types:
+      - completed
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  run-thumbnail-automation:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.PAT_TOKEN_ALL }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Pull Latest Changes (Maintain Persistence)
+      run: |
+        git pull --rebase
+
+    - name: Install and Start Cloudflare WARP (TUN Global Mode)
+      run: |
+        # 1. Repository aur GPG Key set karein
+        curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+        echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+        
+        # 2. Install
+        sudo apt-get update && sudo apt-get install -y cloudflare-warp
+        
+        # 3. Start Service
+        sudo systemctl start warp-svc
+        sleep 2
+        
+        # 4. Register (New CLI Syntax compatible)
+        warp-cli --accept-tos registration new || warp-cli registration new
+        
+        # 5. STRICT FIX: Mode ko PROXY se badal kar TUN (Standard VPN) karein
+        # Yeh pure GitHub runner ka internet traffic WARP se routing kar dega
+        warp-cli --accept-tos mode warp || warp-cli mode warp
+        
+        # 6. Connect
+        warp-cli --accept-tos connect || warp-cli connect
+        sleep 5
+        
+        # 7. Verify ki pure system ka IP change hua ya nahi
+        curl https://cloudflare.com/cdn-cgi/trace
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install playwright playwright-stealth cryptography python-dotenv requests
+        playwright install chromium --with-deps
+
+    - name: Run Thumbnail Script
+      env:
+        DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
+      run: |
+        python generate_thumbnail_2.py
+
+    - name: Upload Error Screenshot
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-thumbnail-error
+        path: error_screenshot.png
+        if-no-files-found: ignore
+
+    - name: Commit and Push Generated Thumbnail & States
+      run: |
+        # Sirf wahi files add hongi jo pipeline ke liye actual mein important hain
+        git add ebook/thumbnail.png ebook_status.json
+        
+        if git diff --staged --quiet; then
+          echo "[INFO] No changes detected in thumbnail or status. Skipping push."
+        else
+          echo "[OK] Changes detected. Committing and pushing updates..."
+          git commit -m "Automated: Update generated thumbnail image and status [skip ci]"
+          
+          # Conflict hone par workflow wali latest file ko preference di jayegi (-X theirs)
+          git pull origin ${GITHUB_REF_NAME} --rebase -X theirs || git rebase --skip
+          
+          git push origin ${GITHUB_REF_NAME}
+        fi

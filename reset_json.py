@@ -87,6 +87,7 @@ def reset_ebook_status():
         "cover_generated",
         "banner_generated",
         "thumbnail_generated",
+        "pdf_merged",
         "kdp_uploaded",
         "gumroad_uploaded"
     ]
@@ -121,7 +122,7 @@ def reset_ebook_status():
         with open(STATUS_FILE_PATH, "w") as file:
             json.dump(data, file, indent=2)
 
-        print("All 7 flags were True. Content moved, ideas updated, and status JSON successfully reset!")
+        print("All 8 flags were True. Content moved, ideas updated, and status JSON successfully reset!")
     else:
         print("Condition not met (at least one flag is False). No actions taken.")
 

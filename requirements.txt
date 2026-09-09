@@ -1,8 +1,7 @@
-playwright
-requests
-python-dotenv
 cryptography
-playwright-stealth
 Pillow
-pypdf 
-img2pdf
+playwright
+playwright-stealth
+pypdf
+python-dotenv
+requests

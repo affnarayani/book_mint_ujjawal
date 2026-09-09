@@ -22,7 +22,7 @@ from playwright_stealth import Stealth
 # =========================
 # CONFIG
 # =========================
-HEADLESS = False  # Set to False to view browser UI directly
+HEADLESS = True
 
 GUMROAD_COOKIES_FILE = Path("gumroad/cookies.json.encrypted")
 STATUS_FILE = Path("ebook_status.json")
