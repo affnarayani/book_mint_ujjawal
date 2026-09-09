@@ -559,7 +559,7 @@ def run():
         # PUBLISH EBOOK (KEEP COMMENTED OUT FOR TESTING)
         # ---------------------------------------------------------
         print("[STEP] Publishing Kindle eBook...", flush=True)
-        page.get_by_role("button", name="Publish Your Kindle eBook").click()
+        # page.get_by_role("button", name="Publish Your Kindle eBook").click()
         major_wait()
         update_status_value(status_data, "kdp_uploaded", True)
         save_status(status_data)
