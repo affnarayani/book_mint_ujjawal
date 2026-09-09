@@ -4,3 +4,5 @@ python-dotenv
 cryptography
 playwright-stealth
 Pillow
+pypdf 
+img2pdf

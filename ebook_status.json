@@ -1,29 +1,32 @@
 [
   {
-    "claude_url": "https://claude.ai/chat/6ac13dbb-51f3-4eed-8590-3a623e753154"
+    "claude_url": ""
   },
   {
-    "title": "Medium Vault: How Course Funnels Builds $1,000/Month"
+    "title": ""
   },
   {
-    "ebook_downloaded": true
+    "ebook_downloaded": false
   },
   {
-    "details_generated": true
+    "details_generated": false
   },
   {
-    "cover_generated": true
+    "cover_generated": false
   },
   {
-    "banner_generated": true
+    "banner_generated": false
   },
   {
-    "thumbnail_generated": true
+    "thumbnail_generated": false
   },
   {
-    "kdp_uploaded": true
+    "pdf_merged": false
   },
   {
-    "gumroad_uploaded": true
+    "kdp_uploaded": false
+  },
+  {
+    "gumroad_uploaded": false
   }
 ]

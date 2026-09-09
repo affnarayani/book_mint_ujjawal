@@ -191,12 +191,18 @@ def run():
     details_generated = get_status_value(status_data, "details_generated")
     cover_generated = get_status_value(status_data, "cover_generated")
 
-    if not title:
-        raise ValueError("❌ 'title' key not found in status file!")
+    # Guard 1: details_generated must be True
+    if not details_generated:
+        print("[INFO] 'details_generated' is not True. Cannot generate cover yet. Exiting safely.", flush=True)
+        sys.exit(0)
 
-    if cover_generated:
+    # Guard 2: cover_generated must not be True
+    if cover_generated is True:
         print("[INFO] 'cover_generated' is already True. Exiting safely.", flush=True)
         sys.exit(0)
+
+    if not title:
+        raise ValueError("❌ 'title' key not found in status file!")
 
     if not DETAILS_FILE.exists():
         raise FileNotFoundError(f"❌ '{DETAILS_FILE}' not found!")
