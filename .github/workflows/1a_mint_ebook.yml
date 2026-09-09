@@ -91,7 +91,11 @@ jobs:
     - name: Commit and Push Changes (If updated)
       run: |
         # Track ebook configuration files and generated output PDF
-        git add ebook_ideas.json ebook_status.json ebook/
+        git add ebook_ideas.json ebook_status.json
+
+        if [ -d "ebook" ] && [ "$(ls -A ebook)" ]; then
+          git add ebook/
+        fi
         
         if git diff --staged --quiet; then
           echo "[INFO] No changes detected. Skipping push."

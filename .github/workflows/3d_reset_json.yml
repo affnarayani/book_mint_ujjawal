@@ -45,7 +45,15 @@ jobs:
     - name: Commit and Push Cleaned/Reset Files
       run: |
         # Reset script dwara updated, moved, aur modified saare changes track karein
-        git add ebook_status.json ebook_ideas.json ebook/ published/
+        git add ebook_status.json ebook_ideas.json
+
+        if [ -d "ebook" ] && [ "$(ls -A ebook)" ]; then
+          git add ebook/
+        fi
+        
+        if [ -d "published" ] && [ "$(ls -A published)" ]; then
+          git add published/
+        fi
         
         if git diff --staged --quiet; then
           echo "[INFO] No changes detected after reset. Skipping push."
