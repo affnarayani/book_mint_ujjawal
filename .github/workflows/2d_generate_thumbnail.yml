@@ -87,8 +87,9 @@ jobs:
 
     - name: Commit and Push Generated Thumbnail & States
       run: |
-        # Sirf wahi files add hongi jo pipeline ke liye actual mein important hain
-        git add ebook/thumbnail.png ebook_status.json
+        # Check karein ki files exist karti hain ya nahi tabhi unhe add karein
+        [ -f "ebook/thumbnail.png" ] && git add ebook/thumbnail.png
+        [ -f "ebook_status.json" ] && git add ebook_status.json
         
         if git diff --staged --quiet; then
           echo "[INFO] No changes detected in thumbnail or status. Skipping push."
