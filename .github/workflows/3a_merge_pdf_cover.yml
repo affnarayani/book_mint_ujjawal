@@ -42,7 +42,7 @@ jobs:
 
     - name: Run Merge PDF Cover Script
       run: |
-        python merge_pdf_cover_2.py
+        python merge_pdf_cover.py
 
     - name: Commit and Push Merged PDF & Status
       run: |

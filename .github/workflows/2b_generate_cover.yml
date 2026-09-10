@@ -75,7 +75,7 @@ jobs:
       env:
         DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
       run: |
-        python generate_cover_2.py
+        python generate_cover.py
 
     - name: Upload Error Screenshot
       if: failure()

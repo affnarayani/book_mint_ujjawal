@@ -75,7 +75,7 @@ jobs:
       env:
         DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
       run: |
-        python generate_thumbnail_2.py
+        python generate_thumbnail.py
 
     - name: Upload Error Screenshot
       if: failure()
