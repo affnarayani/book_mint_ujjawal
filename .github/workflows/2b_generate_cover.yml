@@ -87,8 +87,10 @@ jobs:
 
     - name: Commit and Push Generated Cover & States
       run: |
-        # Sirf wahi files add hongi jo pipeline ke liye actual mein important hain
-        git add ebook/cover.png ebook/cover.jpg ebook_status.json
+        # Check karein ki files exist karti hain ya nahi tabhi unhe add karein
+        [ -f "ebook/cover.png" ] && git add ebook/cover.png
+        [ -f "ebook/cover.jpg" ] && git add ebook/cover.jpg
+        [ -f "ebook_status.json" ] && git add ebook_status.json
         
         if git diff --staged --quiet; then
           echo "[INFO] No changes detected in cover or status. Skipping push."

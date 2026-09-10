@@ -46,17 +46,16 @@ jobs:
 
     - name: Commit and Push Merged PDF & Status
       run: |
-        # Merged PDF aur status file ko track karein
-        git add ebook/ebook.pdf ebook_status.json
+        # Sirf wahi files add karein jo sach mein exist karti hain
+        [ -f "ebook/ebook.pdf" ] && git add ebook/ebook.pdf
+        [ -f "ebook_status.json" ] && git add ebook_status.json
         
         if git diff --staged --quiet; then
-          echo "[INFO] No changes detected in ebook.pdf or status. Skipping push."
+          echo "[INFO] No changes detected or files not found. Skipping push."
         else
           echo "[OK] Changes detected. Committing and pushing updates..."
           git commit -m "Automated: Merge cover page into ebook.pdf and update status [skip ci]"
           
-          # Conflict hone par workflow wali latest file ko preference di jayegi (-X theirs)
           git pull origin ${GITHUB_REF_NAME} --rebase -X theirs || git rebase --skip
-          
           git push origin ${GITHUB_REF_NAME}
         fi
