@@ -294,12 +294,17 @@ def check_token_exhausted(page) -> bool:
     return False
 
 
-def wait_for_stop_button_to_disappear(page):
+def wait_for_stop_button_to_disappear(page, is_fresh_run: bool = False, topic_title: str = ""):
     """Infinitely waits while the Stop response button is visible."""
     stop_button = page.get_by_role("button", name="Stop response")
     print("[STEP] Waiting for output generation to complete (infinitely monitoring stop button)...", flush=True)
     while True:
         if check_token_exhausted(page):
+            if is_fresh_run:
+                current_url = page.url
+                if current_url and current_url != "https://claude.ai/new":
+                    print(f"[INFO] Updating status file before exiting due to token exhaustion: URL={current_url}, Title={topic_title}", flush=True)
+                    update_ebook_status(claude_url=current_url, title=topic_title)
             print("[EXIT] Token exhausted during generation process. Exiting with sys.exit(0)...", flush=True)
             sys.exit(0)
 
@@ -394,6 +399,11 @@ def run(decrypt_key: str):
 
         # Token exhaust check right after navigation
         if check_token_exhausted(page):
+            if is_fresh_run:
+                current_url = page.url
+                if current_url and current_url != "https://claude.ai/new":
+                    print(f"[INFO] Updating status file before initial exit: URL={current_url}, Title={topic_title}", flush=True)
+                    update_ebook_status(claude_url=current_url, title=topic_title)
             print("[EXIT] Token limit reached immediately upon load. Exiting with sys.exit(0)...", flush=True)
             sys.exit(0)
 
@@ -403,7 +413,7 @@ def run(decrypt_key: str):
             send_prompt_text(page, final_prompt)
             
             # Wait for generation to end
-            wait_for_stop_button_to_disappear(page)
+            wait_for_stop_button_to_disappear(page, is_fresh_run=True, topic_title=topic_title)
 
             # Update status JSON with generated chat URL
             current_url = page.url
@@ -418,6 +428,11 @@ def run(decrypt_key: str):
 
         while True:
             if check_token_exhausted(page):
+                if is_fresh_run:
+                    current_url = page.url
+                    if current_url and current_url != "https://claude.ai/new":
+                        print(f"[INFO] Updating status file before loop exit: URL={current_url}, Title={topic_title}", flush=True)
+                        update_ebook_status(claude_url=current_url, title=topic_title)
                 print("[EXIT] Token limit reached. Exiting with sys.exit(0)...", flush=True)
                 sys.exit(0)
 
@@ -441,7 +456,11 @@ def run(decrypt_key: str):
                 custom_random_wait(6, 12)
 
                 # Update status
-                update_ebook_status(ebook_downloaded=True)
+                if is_fresh_run:
+                    current_url = page.url
+                    update_ebook_status(claude_url=current_url, title=topic_title, ebook_downloaded=True)
+                else:
+                    update_ebook_status(ebook_downloaded=True)
                 break
 
             # Check Continue button if download button is not visible
@@ -449,13 +468,13 @@ def run(decrypt_key: str):
                 print("[STEP] Download button not ready, but 'Continue' button detected. Clicking...", flush=True)
                 continue_button_locator.click()
                 custom_random_wait(6, 12)
-                wait_for_stop_button_to_disappear(page)
+                wait_for_stop_button_to_disappear(page, is_fresh_run=is_fresh_run, topic_title=topic_title)
 
             # Neither Download nor Continue button found: send completion prompt
             else:
                 print("[STEP] Neither Download nor Continue button detected. Sending continuation prompt...", flush=True)
                 send_prompt_text(page, "Continue and complete the last query.")
-                wait_for_stop_button_to_disappear(page)
+                wait_for_stop_button_to_disappear(page, is_fresh_run=is_fresh_run, topic_title=topic_title)
 
     except SystemExit:
         raise
