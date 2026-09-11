@@ -279,6 +279,7 @@ def check_token_exhausted(page) -> bool:
     """Checks if any token limit error is visible on screen."""
     out_of_free_messages = page.get_by_text("You are out of free messages(")
     upgrade_text = page.get_by_role("heading", name="Upgrade to keep chatting")
+    custom_random_wait(6, 12)
     if out_of_free_messages.is_visible() or upgrade_text.is_visible():
         print("[ALERT] Token limit signal detected!", flush=True)
         return True
@@ -310,7 +311,7 @@ def send_prompt_text(page, prompt_text: str):
     input_text_box.wait_for(state="visible", timeout=30000)
 
     custom_random_wait(6, 12)
-    
+
     print("[STEP] Typing prompt into input field...", flush=True)
     input_text_box.fill(prompt_text)
 
