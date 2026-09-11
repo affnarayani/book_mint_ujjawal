@@ -308,6 +308,8 @@ def send_prompt_text(page, prompt_text: str):
         page.get_by_test_id("chat-input").get_by_role("paragraph")
     ).first
     input_text_box.wait_for(state="visible", timeout=30000)
+
+    custom_random_wait(6, 12)
     
     print("[STEP] Typing prompt into input field...", flush=True)
     input_text_box.fill(prompt_text)
