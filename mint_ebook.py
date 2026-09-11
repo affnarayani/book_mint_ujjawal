@@ -21,7 +21,7 @@ from playwright_stealth import Stealth
 # =========================
 # CONFIG
 # =========================
-HEADLESS = True
+HEADLESS = False
 
 COOKIES_FILE = "claude/cookies.json.encrypted"
 EBOOK_IDEAS_FILE = "ebook_ideas.json"
@@ -313,9 +313,7 @@ def wait_for_stop_button_to_disappear(page):
 
 def send_prompt_text(page, prompt_text: str):
     """Inputs text into chat prompt field and clicks send button."""
-    input_text_box = page.get_by_role("paragraph").or_(
-        page.get_by_test_id("chat-input").get_by_role("paragraph")
-    ).first
+    input_text_box = page.get_by_test_id("chat-input")
     input_text_box.wait_for(state="visible", timeout=30000)
 
     custom_random_wait(6, 12)
