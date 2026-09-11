@@ -44,25 +44,21 @@ jobs:
 
     - name: Commit and Push Cleaned/Reset Files
       run: |
-        # Reset script dwara updated, moved, aur modified saare changes track karein
-        git add ebook_status.json ebook_ideas.json
+        # Saare modified, untracked aur moved files ko stage karein
+        git add -A
 
-        if [ -d "ebook" ] && [ "$(ls -A ebook)" ]; then
-          git add ebook/
-        fi
-        
-        if [ -d "published" ] && [ "$(ls -A published)" ]; then
-          git add published/
-        fi
-        
         if git diff --staged --quiet; then
           echo "[INFO] No changes detected after reset. Skipping push."
         else
           echo "[OK] Changes detected. Committing and pushing updates..."
           git commit -m "Automated: Move published ebook files and reset status/ideas JSON [skip ci]"
           
-          # Conflict hone par workflow wali latest file ko preference di jayegi (-X theirs)
+          # Unstaged working directory ko clean/stash karein taaki rebase fail na ho
+          git stash --include-untracked
+
+          # Pull with rebase
           git pull origin ${GITHUB_REF_NAME} --rebase -X theirs || git rebase --skip
-          
+
+          # Push changes
           git push origin ${GITHUB_REF_NAME}
         fi
