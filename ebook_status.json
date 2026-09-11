@@ -1,32 +1,32 @@
 [
   {
-    "claude_url": "https://claude.ai/chat/260be320-515f-4917-ba3d-16ec77a21609"
+    "claude_url": ""
   },
   {
-    "title": "The Quiet Advantage: How Reserved Minds Outthink the Loud Crowd"
+    "title": ""
   },
   {
-    "ebook_downloaded": true
+    "ebook_downloaded": false
   },
   {
-    "details_generated": true
+    "details_generated": false
   },
   {
-    "cover_generated": true
+    "cover_generated": false
   },
   {
-    "banner_generated": true
+    "banner_generated": false
   },
   {
-    "thumbnail_generated": true
+    "thumbnail_generated": false
   },
   {
-    "pdf_merged": true
+    "pdf_merged": false
   },
   {
-    "kdp_uploaded": true
+    "kdp_uploaded": false
   },
   {
-    "gumroad_uploaded": true
+    "gumroad_uploaded": false
   }
 ]
