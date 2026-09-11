@@ -279,10 +279,18 @@ def check_token_exhausted(page) -> bool:
     """Checks if any token limit error is visible on screen."""
     out_of_free_messages = page.get_by_text("You are out of free messages(")
     upgrade_text = page.get_by_role("heading", name="Upgrade to keep chatting")
+    upgrade_notice_link = page.get_by_test_id("notice-region-slot-shift").get_by_role("link", name="Upgrade")
+    
     custom_random_wait(6, 12)
-    if out_of_free_messages.is_visible() or upgrade_text.is_visible():
+    
+    if (
+        out_of_free_messages.is_visible() 
+        or upgrade_text.is_visible() 
+        or upgrade_notice_link.is_visible()
+    ):
         print("[ALERT] Token limit signal detected!", flush=True)
         return True
+        
     return False
 
 
