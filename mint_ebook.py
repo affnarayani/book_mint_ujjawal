@@ -71,6 +71,8 @@ Before writing, do the following internally:
 
 ## STEP 3: MANDATORY STRUCTURE (in this exact order)
 
+**Do NOT include any cover/title page.** The PDF must start directly with the Copyright Page as page 1.
+
 1. **Copyright Page**
    - Standard copyright notice using the **current year**.
    - Author/Publisher name: **"Mind To Better" (Ujjawal Kumar)**.
@@ -100,6 +102,7 @@ Before writing, do the following internally:
 ## STEP 4: FORMATTING & DESIGN RULES
 
 - **Professional layout throughout**: consistent margins, spacing, and alignment on every page.
+- **Standard margins**: Use standard, professional page margins on every page, applied consistently throughout the entire document.
 - **Orphan heading rule (strict)**: A subheading must never appear at the very bottom of a page with its content starting only on the next page. If a subheading would otherwise land at the bottom of a page, push the entire subheading (and its content) to the start of the next page instead, so the page ends cleanly and looks polished.
 - **Standard page numbering**: Every page must have a page number in a consistent position (e.g., bottom center or bottom corner), using a consistent numbering style throughout.
 - **Consistent branding footer**: Every page should carry a small, unobtrusive footer element with "Mind To Better" branding — subtle, not distracting from the content.
