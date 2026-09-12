@@ -1,32 +1,32 @@
 [
   {
-    "claude_url": "https://claude.ai/chat/28fa2721-0436-44ca-9382-1fa012f4b313"
+    "claude_url": ""
   },
   {
-    "title": "Speak Less, Earn More: The Quiet Path to Career Growth"
+    "title": ""
   },
   {
-    "ebook_downloaded": true
+    "ebook_downloaded": false
   },
   {
-    "details_generated": true
+    "details_generated": false
   },
   {
-    "cover_generated": true
+    "cover_generated": false
   },
   {
-    "banner_generated": true
+    "banner_generated": false
   },
   {
-    "thumbnail_generated": true
+    "thumbnail_generated": false
   },
   {
-    "pdf_merged": true
+    "pdf_merged": false
   },
   {
-    "kdp_uploaded": true
+    "kdp_uploaded": false
   },
   {
-    "gumroad_uploaded": true
+    "gumroad_uploaded": false
   }
 ]
