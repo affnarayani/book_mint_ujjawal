@@ -466,11 +466,10 @@ def run(decrypt_key: str):
                     update_ebook_status(ebook_downloaded=True)
                 break
 
-            # Check Continue button if download button is not visible
+            # Check Continue button or send fallback continuation prompt
             elif continue_button_locator.is_visible():
-                print("[STEP] Download button not ready, but 'Continue' button detected. Clicking...", flush=True)
-                continue_button_locator.click()
-                custom_random_wait(6, 12)
+                print("[STEP] 'Continue' button detected. Sending continuation prompt...", flush=True)
+                send_prompt_text(page, "Continue and complete the last query.")
                 wait_for_stop_button_to_disappear(page, is_fresh_run=is_fresh_run, topic_title=topic_title)
 
             # Neither Download nor Continue button found: send completion prompt
