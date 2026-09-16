@@ -1,32 +1,32 @@
 [
   {
-    "claude_url": "https://claude.ai/chat/db5c22f3-9384-409f-804f-209f1e3431a3"
+    "claude_url": ""
   },
   {
-    "title": "The Unbothered Mind: How Introverts Focus While the World Gets Distracted"
+    "title": ""
   },
   {
-    "ebook_downloaded": true
+    "ebook_downloaded": false
   },
   {
-    "details_generated": true
+    "details_generated": false
   },
   {
-    "cover_generated": true
+    "cover_generated": false
   },
   {
-    "banner_generated": true
+    "banner_generated": false
   },
   {
-    "thumbnail_generated": true
+    "thumbnail_generated": false
   },
   {
-    "pdf_merged": true
+    "pdf_merged": false
   },
   {
-    "kdp_uploaded": true
+    "kdp_uploaded": false
   },
   {
-    "gumroad_uploaded": true
+    "gumroad_uploaded": false
   }
 ]
