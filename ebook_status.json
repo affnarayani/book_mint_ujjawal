@@ -1,32 +1,32 @@
 [
   {
-    "claude_url": "https://claude.ai/chat/7cba0edf-a0f2-41ad-b60d-34ae675af30b"
+    "claude_url": ""
   },
   {
-    "title": "The Frugal Mind: Why Saving Feels Like Power, Not Sacrifice"
+    "title": ""
   },
   {
-    "ebook_downloaded": true
+    "ebook_downloaded": false
   },
   {
-    "details_generated": true
+    "details_generated": false
   },
   {
-    "cover_generated": true
+    "cover_generated": false
   },
   {
-    "banner_generated": true
+    "banner_generated": false
   },
   {
-    "thumbnail_generated": true
+    "thumbnail_generated": false
   },
   {
-    "pdf_merged": true
+    "pdf_merged": false
   },
   {
-    "kdp_uploaded": true
+    "kdp_uploaded": false
   },
   {
-    "gumroad_uploaded": true
+    "gumroad_uploaded": false
   }
 ]
