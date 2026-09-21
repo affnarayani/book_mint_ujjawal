@@ -1,32 +1,32 @@
 [
   {
-    "claude_url": "https://claude.ai/chat/9db2a944-c3c3-401a-95ad-57c33c622bf7"
+    "claude_url": ""
   },
   {
-    "title": "The Quiet Wealth Builder: How Simple Living Creates Real Freedom"
+    "title": ""
   },
   {
-    "ebook_downloaded": true
+    "ebook_downloaded": false
   },
   {
-    "details_generated": true
+    "details_generated": false
   },
   {
-    "cover_generated": true
+    "cover_generated": false
   },
   {
-    "banner_generated": true
+    "banner_generated": false
   },
   {
-    "thumbnail_generated": true
+    "thumbnail_generated": false
   },
   {
-    "pdf_merged": true
+    "pdf_merged": false
   },
   {
-    "kdp_uploaded": true
+    "kdp_uploaded": false
   },
   {
-    "gumroad_uploaded": true
+    "gumroad_uploaded": false
   }
 ]
