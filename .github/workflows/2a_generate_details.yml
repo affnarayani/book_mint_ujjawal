@@ -2,7 +2,7 @@ name: 2A. Generate Details
 
 on:
   schedule:
-    - cron: '0 */4 * * *' # Every 4 hours
+    - cron: '0 */6 * * *' 
   workflow_dispatch:
 
 concurrency:

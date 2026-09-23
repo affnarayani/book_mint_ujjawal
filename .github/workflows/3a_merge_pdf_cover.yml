@@ -3,7 +3,7 @@ name: 3A. Merge PDF Cover
 on: 
   workflow_dispatch: 
   schedule:
-    - cron: '0 */2 * * *'
+    - cron: '0 */3 * * *'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
