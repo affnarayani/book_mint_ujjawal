@@ -1,32 +1,32 @@
 [
   {
-    "claude_url": "https://claude.ai/chat/8a6a3cbe-a7d3-43d6-929c-83be90ae83a3"
+    "claude_url": ""
   },
   {
-    "title": "Buy Less, Own More: The Psychology of Deliberate Spending"
+    "title": ""
   },
   {
-    "ebook_downloaded": true
+    "ebook_downloaded": false
   },
   {
-    "details_generated": true
+    "details_generated": false
   },
   {
-    "cover_generated": true
+    "cover_generated": false
   },
   {
-    "banner_generated": true
+    "banner_generated": false
   },
   {
-    "thumbnail_generated": true
+    "thumbnail_generated": false
   },
   {
-    "pdf_merged": true
+    "pdf_merged": false
   },
   {
-    "kdp_uploaded": true
+    "kdp_uploaded": false
   },
   {
-    "gumroad_uploaded": true
+    "gumroad_uploaded": false
   }
 ]
