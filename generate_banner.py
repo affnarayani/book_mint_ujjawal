@@ -303,7 +303,7 @@ def run():
         if not found_share:
             raise RuntimeError("❌ Image generation timed out or Share button failed to appear.")
 
-        page.get_by_role("menuitem", name="This image").click()
+        page.get_by_role("menuitem", name="This image").or_(page.get_by_role("button", name="Download")).first.click()
         minor_wait()
                 
         # Download Strategy: Direct Download Button
