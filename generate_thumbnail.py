@@ -17,6 +17,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth
+import requests
 
 # =========================
 # CONFIG
@@ -39,7 +40,8 @@ INPUT_COVER_PNG = OUTPUT_DIR / "cover.png"
 OUTPUT_THUMBNAIL_PNG = OUTPUT_DIR / "thumbnail.png"
 
 PBKDF2_ITERATIONS = 200_000
-MAX_RETRIES = 10
+MAX_RETRIES = 5
+MAX_REFRESH_CYCLES = 3
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
@@ -131,6 +133,35 @@ def load_cookies(file_path: Path) -> List[Dict[str, Any]]:
 
 
 # =========================
+# UPLOAD TO ONLYFILES
+# =========================
+def upload_to_onlyfiles(screenshot_path):
+    url = "https://api.onlyfiles.com/v1/upload"
+    expire_seconds = 172800  # 48 hours
+
+    try:
+        with open(screenshot_path, "rb") as file:
+            response = requests.post(url, files={"file": file}, data={"expire": expire_seconds})
+
+        if response.status_code == 200:
+            res_data = response.json()
+            if res_data.get("status"):
+                direct_url = res_data["data"]["file"]["url"]["full"]
+                print(f"👉 DIRECT LINK (Expires in 48 Hours): {direct_url}")
+                return direct_url
+            else:
+                error_msg = res_data.get("error", {}).get("message", "Unknown error")
+                print(f"[WARNING] Upload Failed: {error_msg}")
+                return None
+        else:
+            print(f"[WARNING] Upload Failed: {response.status_code}")
+            return None
+    except Exception as upload_err:
+        print(f"[WARNING] Could not upload screenshot to onlyfiles: {upload_err}", flush=True)
+        return None
+
+
+# =========================
 # EBOOK STATUS HELPERS
 # =========================
 def load_status():
@@ -195,6 +226,7 @@ def run():
     pw = pw_cm.__enter__()
 
     browser = None
+    page = None
     try:
         browser = pw.chromium.launch(
             headless=HEADLESS,
@@ -249,59 +281,71 @@ def run():
 
         found_share = False
         image_downloaded_successfully = False
+        refresh_cycle = 0
 
-        for attempt in range(1, MAX_RETRIES + 1):
-            print(f"[STEP] Waiting for thumbnail generation... Attempt {attempt}/{MAX_RETRIES}", flush=True)
-            major_wait()
+        while refresh_cycle < MAX_REFRESH_CYCLES and not found_share:
+            if refresh_cycle > 0:
+                print(f"[STEP] Refreshing same page (Refresh attempt {refresh_cycle}/{MAX_REFRESH_CYCLES})...", flush=True)
+                page.reload(wait_until="load")
+                major_wait()
 
-            # Skip or Preference logic
-            try:
-                skip_button = page.get_by_role("button", name="Skip")
-                if skip_button.first.is_visible():
-                    print("[INFO] 'Skip' button detected! Clicking 'Skip'...", flush=True)
-                    skip_button.first.click()
-                    minor_wait()
+            for attempt in range(1, MAX_RETRIES + 1):
+                print(f"[STEP] Waiting for thumbnail generation... Attempt {attempt}/{MAX_RETRIES} (Refresh Cycle {refresh_cycle})", flush=True)
+                major_wait()
 
-                    option_1 = page.locator("div").filter(has_text=re.compile(r"^1Image 1Image 1 is better$")).get_by_label("")
-                    option_2 = page.locator("div").filter(has_text=re.compile(r"^2Image 2Image 2 is better$")).get_by_label("")
-
-                    if option_1.first.is_visible() or option_2.first.is_visible():
-                        chosen_option = random.choice([option_1, option_2])
-                        if chosen_option.first.is_visible():
-                            chosen_option.first.click()
-                            minor_wait()
-            except Exception:
-                pass
-
-            # Detect 'Share this image' button
-            try:
-                locator = page.get_by_role("button", name="Share this image").first
-                if locator.is_visible():
-                    print("✅ 'Share this image' button located successfully!", flush=True)
-                    locator.click()  # Explicitly click the Share button
-                    print("[STEP] Clicked 'Share this image' button.", flush=True)
-                    minor_wait()  # Essential wait for Download option to render
-                    found_share = True
-                    break
-            except Exception as e:
-                print(f"[DEBUG] Could not click share button yet: {e}", flush=True)
-
-            if not found_share and attempt == 5:
+                # Skip or Preference logic
                 try:
-                    chat_box = page.get_by_role("textbox", name="Chat with ChatGPT")
-                    if chat_box.count() == 0:
-                        chat_box = page.locator("#prompt-textarea")
+                    skip_button = page.get_by_role("button", name="Skip")
+                    if skip_button.first.is_visible():
+                        print("[INFO] 'Skip' button detected! Clicking 'Skip'...", flush=True)
+                        skip_button.first.click()
+                        minor_wait()
 
-                    if chat_box.count() > 0:
-                        chat_box.first.click()
-                        chat_box.first.type("Please continue generating the image")
-                        page.keyboard.press("Enter")
-                        major_wait()
+                        option_1 = page.locator("div").filter(has_text=re.compile(r"^1Image 1Image 1 is better$")).get_by_label("")
+                        option_2 = page.locator("div").filter(has_text=re.compile(r"^2Image 2Image 2 is better$")).get_by_label("")
+
+                        if option_1.first.is_visible() or option_2.first.is_visible():
+                            chosen_option = random.choice([option_1, option_2])
+                            if chosen_option.first.is_visible():
+                                chosen_option.first.click()
+                                minor_wait()
                 except Exception:
                     pass
 
+                # Detect 'Share this image' button
+                try:
+                    locator = page.get_by_role("button", name="Share this image").first
+                    if locator.is_visible():
+                        print("✅ 'Share this image' button located successfully!", flush=True)
+                        locator.click()  # Explicitly click the Share button
+                        print("[STEP] Clicked 'Share this image' button.", flush=True)
+                        minor_wait()  # Essential wait for Download option to render
+                        found_share = True
+                        break
+                except Exception as e:
+                    print(f"[DEBUG] Could not click share button yet: {e}", flush=True)
+
+                if not found_share and attempt == 3 and refresh_cycle == 0:
+                    try:
+                        chat_box = page.get_by_role("textbox", name="Chat with ChatGPT")
+                        if chat_box.count() == 0:
+                            chat_box = page.locator("#prompt-textarea")
+
+                        if chat_box.count() > 0:
+                            chat_box.first.click()
+                            chat_box.first.type("Please continue generating the image")
+                            page.keyboard.press("Enter")
+                            major_wait()
+                    except Exception:
+                        pass
+
+            if not found_share:
+                refresh_cycle += 1
+                if refresh_cycle < MAX_REFRESH_CYCLES:
+                    print(f"[WARNING] Share button failed to appear after {MAX_RETRIES} attempts. Refreshing page...", flush=True)
+
         if not found_share:
-            raise RuntimeError("❌ Image generation timed out or Share button failed to appear.")
+            raise RuntimeError("❌ Image generation timed out or Share button failed to appear after multiple refreshes.")
 
         page.get_by_role("menuitem", name="This image").click()
         minor_wait()
@@ -357,6 +401,14 @@ def run():
 
     except Exception as e:
         print(f"[ERROR] {e}", flush=True)
+        if page:
+            try:
+                screenshot_path = "thumbnail_error_screenshot.png"
+                page.screenshot(path=screenshot_path, full_page=True)
+                print(f"[OK] Error screenshot captured: {screenshot_path}", flush=True)
+                upload_to_onlyfiles(screenshot_path)
+            except Exception as screenshot_err:
+                print(f"[WARNING] Could not capture or upload screenshot: {screenshot_err}", flush=True)
         sys.exit(1)
 
     finally:
