@@ -226,7 +226,7 @@ def run():
 
         # Locate chat box
         print("[STEP] Locating chat textbox...", flush=True)
-        chat_box = page.get_by_role("textbox", name="Chat with ChatGPT")
+        chat_box = page.get_by_role("textbox", name="Chat with ChatGPT").or_(page.get_by_role("textbox", name="Ask ChatGPT"))
         if chat_box.count() == 0:
             chat_box = page.locator('div[contenteditable="true"]').filter(
                 has=page.locator("p", has_text="Describe or edit an image")
