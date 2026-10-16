@@ -344,28 +344,44 @@ def run():
                 if refresh_cycle < MAX_REFRESH_CYCLES:
                     print(f"[WARNING] Share button failed to appear after {MAX_RETRIES} attempts. Refreshing page...", flush=True)
 
-        if not found_share:
-            raise RuntimeError("❌ Image generation timed out or Share button failed to appear after multiple refreshes.")
-
-        page.get_by_role("menuitem", name="This image").click()
-        minor_wait()
+        # Download Logic handling Share button vs Direct Download File button
+        if found_share:
+            page.get_by_role("menuitem", name="This image").click()
+            minor_wait()
                 
-        # Download Strategy: Direct Download Button
-        print("[STEP] Checking for Direct 'Download' button...", flush=True)
-        direct_download_btn = page.get_by_role("button", name="Download").first
+            print("[STEP] Checking for Direct 'Download' button...", flush=True)
+            direct_download_btn = page.get_by_role("button", name="Download").first
 
-        if direct_download_btn.is_visible():
-            try:
-                with page.expect_download(timeout=60000) as download_info:
-                    direct_download_btn.click()
+            if direct_download_btn.is_visible():
+                try:
+                    with page.expect_download(timeout=60000) as download_info:
+                        direct_download_btn.click()
 
-                download = download_info.value
-                download.save_as(OUTPUT_THUMBNAIL_PNG)
-                print(f"✅ Thumbnail image downloaded: {OUTPUT_THUMBNAIL_PNG}", flush=True)
-                image_downloaded_successfully = True
-                major_wait()
-            except Exception as direct_dl_err:
-                print(f"[WARNING] Direct download failed, attempting container extract: {direct_dl_err}", flush=True)
+                    download = download_info.value
+                    download.save_as(OUTPUT_THUMBNAIL_PNG)
+                    print(f"✅ Thumbnail image downloaded: {OUTPUT_THUMBNAIL_PNG}", flush=True)
+                    image_downloaded_successfully = True
+                    major_wait()
+                except Exception as direct_dl_err:
+                    print(f"[WARNING] Direct download failed, attempting container extract: {direct_dl_err}", flush=True)
+        else:
+            print("[STEP] Share button not found. Checking for direct 'Download file' button...", flush=True)
+            direct_file_btn = page.get_by_role("button", name="Download file").first
+            if direct_file_btn.is_visible():
+                try:
+                    print("✅ 'Download file' button located directly!", flush=True)
+                    with page.expect_download(timeout=60000) as download_info:
+                        direct_file_btn.click()
+
+                    download = download_info.value
+                    download.save_as(OUTPUT_THUMBNAIL_PNG)
+                    print(f"✅ Thumbnail image downloaded via 'Download file': {OUTPUT_THUMBNAIL_PNG}", flush=True)
+                    image_downloaded_successfully = True
+                    major_wait()
+                except Exception as file_dl_err:
+                    print(f"[WARNING] 'Download file' download failed: {file_dl_err}", flush=True)
+            else:
+                print("[WARNING] Neither share button nor 'Download file' button found.", flush=True)
 
         # Fallback Strategy: Blob / Image extraction
         if not image_downloaded_successfully:
