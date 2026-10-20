@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN_ALL }}
 
       - name: Set up Python
         uses: actions/setup-python@v6
