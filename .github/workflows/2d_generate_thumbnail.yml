@@ -77,7 +77,7 @@ jobs:
           DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
-          xvfb-run --auto-servernum python image_generate.py
+          xvfb-run --auto-servernum python generate_thumbnail.py
 
       - name: Commit and Push Generated Thumbnail & States
         run: |

@@ -19,7 +19,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 if GOOGLE_API_KEY:
     os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
-HEADLESS = False  # Local testing ke liye False
+HEADLESS = False
 ROOT_DIR = os.path.dirname(__file__)
 COOKIES_DIR = os.path.join(ROOT_DIR, "cookies")
 IMAGE_OUTPUT_DIR = os.path.join(ROOT_DIR, "ebook")
