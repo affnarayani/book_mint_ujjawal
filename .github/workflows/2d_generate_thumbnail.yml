@@ -1,4 +1,4 @@
-name: Run Image Generator Script
+name: 2D. Generate Thumbnail
 
 on: 
   workflow_dispatch: 
