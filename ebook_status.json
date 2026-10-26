@@ -1,32 +1,32 @@
 [
   {
-    "claude_url": "https://claude.ai/chat/246a06e6-5a71-4308-bddd-2bfc19407b51"
+    "claude_url": ""
   },
   {
-    "title": "The Underspender's Secret: Turning Restraint Into Long-Term Wealth"
+    "title": ""
   },
   {
-    "ebook_downloaded": true
+    "ebook_downloaded": false
   },
   {
-    "details_generated": true
+    "details_generated": false
   },
   {
-    "cover_generated": true
+    "cover_generated": false
   },
   {
-    "banner_generated": true
+    "banner_generated": false
   },
   {
-    "thumbnail_generated": true
+    "thumbnail_generated": false
   },
   {
-    "pdf_merged": true
+    "pdf_merged": false
   },
   {
-    "kdp_uploaded": true
+    "kdp_uploaded": false
   },
   {
-    "gumroad_uploaded": true
+    "gumroad_uploaded": false
   }
 ]
