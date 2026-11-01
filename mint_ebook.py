@@ -426,19 +426,18 @@ def run(decrypt_key: str):
         # Download & Continuation Loop
         try:
             # 1. Pehle direct download button (transcript-sizer ya label wala) dhoond kar click karne ki koshish karo
-            direct_download = (
+            download_button_locator = (
                 page.get_by_test_id("transcript-sizer")
                 .get_by_role("button", name="Download")
                 .or_(page.get_by_label("Download", exact=True))
             )
             # Thode chote timeout (jaise 3 sec) ke sath click try karo taaki agar na ho toh foran fallback ho jaye
-            direct_download.click(timeout=3000)
+            download_button_locator.click(timeout=15000)
             
         except:
             # 2. Agar direct button nahi mila, toh file card par hover karke 'Download Ebook' click karo
             page.get_by_test_id("file-card-open").hover()
-            direct_download = page.get_by_role("button", name="Download Ebook").click()
-            
+            download_button_locator = page.get_by_role("button", name="Download Ebook").click()
         continue_button_locator = page.get_by_role("button", name="Continue")
 
         while True:
