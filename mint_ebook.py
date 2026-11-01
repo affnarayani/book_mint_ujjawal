@@ -424,20 +424,9 @@ def run(decrypt_key: str):
             update_ebook_status(claude_url=current_url, title=topic_title)
 
         # Download & Continuation Loop
-        try:
-            # 1. Pehle direct download button (transcript-sizer ya label wala) dhoond kar click karne ki koshish karo
-            download_button_locator = (
-                page.get_by_test_id("transcript-sizer")
-                .get_by_role("button", name="Download")
-                .or_(page.get_by_label("Download", exact=True)).first
-            )
-            # Thode chote timeout (jaise 3 sec) ke sath click try karo taaki agar na ho toh foran fallback ho jaye
-            download_button_locator.click(timeout=15000)
-            
-        except:
-            # 2. Agar direct button nahi mila, toh file card par hover karke 'Download Ebook' click karo
-            page.get_by_test_id("file-card-open").hover()
-            download_button_locator = page.get_by_role("button", name="Download Ebook").click()
+        download_button_locator = page.get_by_test_id("transcript-sizer").get_by_role("button", name="Download").or_(
+            page.get_by_label("Download", exact=True)
+        )
         continue_button_locator = page.get_by_role("button", name="Continue")
 
         while True:
@@ -453,7 +442,7 @@ def run(decrypt_key: str):
             # Check download button availability
             if download_button_locator.first.is_visible():
                 print("[SUCCESS] Download button located!", flush=True)
-                download_btn = download_button_locator
+                download_btn = download_button_locator.first
                 
                 # Ensure target directory exists
                 ebook_dir = Path("ebook")
