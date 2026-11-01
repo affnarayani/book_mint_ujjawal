@@ -429,7 +429,7 @@ def run(decrypt_key: str):
             download_button_locator = (
                 page.get_by_test_id("transcript-sizer")
                 .get_by_role("button", name="Download")
-                .or_(page.get_by_label("Download", exact=True))
+                .or_(page.get_by_label("Download", exact=True)).first
             )
             # Thode chote timeout (jaise 3 sec) ke sath click try karo taaki agar na ho toh foran fallback ho jaye
             download_button_locator.click(timeout=15000)
@@ -453,7 +453,7 @@ def run(decrypt_key: str):
             # Check download button availability
             if download_button_locator.first.is_visible():
                 print("[SUCCESS] Download button located!", flush=True)
-                download_btn = download_button_locator.first
+                download_btn = download_button_locator
                 
                 # Ensure target directory exists
                 ebook_dir = Path("ebook")
