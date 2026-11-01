@@ -424,8 +424,10 @@ def run(decrypt_key: str):
             update_ebook_status(claude_url=current_url, title=topic_title)
 
         # Download & Continuation Loop
-        download_button_locator = page.get_by_test_id("transcript-sizer").get_by_role("button", name="Download").or_(
-            page.get_by_label("Download", exact=True)
+        download_button_locator = (
+            page.get_by_test_id("transcript-sizer").get_by_role("button", name="Download")
+            .or_(page.get_by_label("Download", exact=True))
+            .or_(page.get_by_role("button", name="Download Ebook"))
         )
         continue_button_locator = page.get_by_role("button", name="Continue")
 
