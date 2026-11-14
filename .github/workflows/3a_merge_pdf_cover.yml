@@ -1,7 +1,7 @@
 name: 3A. Merge PDF Cover
 
-on: 
-  workflow_dispatch: 
+on:
+  workflow_dispatch:
   schedule:
     - cron: '0 */3 * * *'
 
@@ -38,7 +38,7 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pypdf pillow
+        pip install -r requirements.txt
 
     - name: Run Merge PDF Cover Script
       run: |
@@ -46,9 +46,11 @@ jobs:
 
     - name: Commit and Push Merged PDF & Status
       run: |
-        # Sirf wahi files add karein jo sach mein exist karti hain
+        # Only add files that actually exist
         [ -f "ebook/ebook.pdf" ] && git add ebook/ebook.pdf
-        [ -f "ebook_status.json" ] && git add ebook_status.json
+        [ -f "json/ebook_status.json" ] && git add json/ebook_status.json
+        [ -d "locators" ] && git add locators/
+        [ -f "json/config.json" ] && git add json/config.json
         
         if git diff --staged --quiet; then
           echo "[INFO] No changes detected or files not found. Skipping push."

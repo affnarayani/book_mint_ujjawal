@@ -1,4 +1,5 @@
 cryptography
+google-genai
 Pillow
 playwright
 playwright-stealth

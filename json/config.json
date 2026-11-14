@@ -1,0 +1,85 @@
+{
+  "app": {
+    "project_name": "book_mint_ujjawal",
+    "default_author_first_name": "Ujjawal",
+    "default_author_last_name": "Kumar",
+    "default_author_full_name": "Ujjawal Kumar"
+  },
+  "browser": {
+    "headless": false,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "launch_args": [
+      "--start-maximized",
+      "--disable-blink-features=AutomationControlled"
+    ],
+    "grant_permissions": [
+      "clipboard-read",
+      "clipboard-write"
+    ]
+  },
+  "paths": {
+    "json_dir": "json",
+    "locators_dir": "locators",
+    "error_dir": "error",
+    "error_screenshot": "error/error_screenshot.png",
+    "ebook_dir": "ebook",
+    "ebook_pdf": "ebook/ebook.pdf",
+    "ebook_cover_jpg": "ebook/cover.jpg",
+    "ebook_cover_png": "ebook/cover.png",
+    "ebook_banner_png": "ebook/banner.png",
+    "ebook_thumbnail_png": "ebook/thumbnail.png",
+    "ebook_status": "json/ebook_status.json",
+    "ebook_details": "json/ebook_details.json",
+    "ebook_ideas": "json/ebook_ideas.json",
+    "claude_cookies": "claude_cookies/cookies.json.encrypted",
+    "chatgpt_cookies_dir": "chatgpt_cookies",
+    "kdp_cookies": "kdp_cookies/cookies.json.encrypted",
+    "gumroad_cookies": "gumroad_cookies/cookies.json.encrypted"
+  },
+  "crypto": {
+    "pbkdf2_iterations": 200000
+  },
+  "gemini": {
+    "model": "gemini-3.5-flash-lite",
+    "temperature": 0.0,
+    "max_output_tokens": 512,
+    "enabled": true
+  },
+  "locators": {
+    "auto_correct_locator": true
+  },
+  "wait": {
+    "minor_min": 6,
+    "minor_max": 12,
+    "major_min": 30,
+    "major_max": 60,
+    "closing_min": 15,
+    "closing_max": 30,
+    "poll_min": 2,
+    "poll_max": 4,
+    "typing_min": 5,
+    "typing_max": 10,
+    "stream_min": 15,
+    "stream_max": 25,
+    "post_upload_min": 30,
+    "post_upload_max": 60
+  },
+  "retry": {
+    "cover_max_retries": 10,
+    "banner_max_retries": 10,
+    "thumbnail_max_retries": 5,
+    "thumbnail_max_refresh_cycles": 3,
+    "continue_prompt_attempt": 5
+  },
+  "gemini_vision": {
+    "fallback_enabled": true
+  },
+  "publishing": {
+    "kdp_price": "4.99",
+    "gumroad_price": "27",
+    "gumroad_button_text": "Download Your Ebook",
+    "kdp_language": "English",
+    "ai_text_tool": "ChatGPT",
+    "ai_image_tool": "DALL-E"
+  }
+}

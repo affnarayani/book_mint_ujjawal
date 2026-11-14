@@ -1,22 +1,26 @@
-import json
+﻿import json
 import os
 import re
 import shutil
 
-STATUS_FILE_PATH = "ebook_status.json"
-IDEAS_FILE_PATH = "ebook_ideas.json"
-EBOOK_DIR = "ebook"
-PUBLISHED_DIR = "published"
+from common.common import ROOT_DIR, path
+
+STATUS_FILE_PATH = path("ebook_status")
+IDEAS_FILE_PATH = path("ebook_ideas")
+EBOOK_DIR = path("ebook_dir")
+PUBLISHED_DIR = ROOT_DIR / "published"
+
 
 def get_clean_folder_name(title):
-    # 1. Non-alphanumeric characters ko space se replace karo (words/numbers alag rahein)
+    # 1. Replace non-alphanumeric characters with a space (keep words/numbers separate)
     clean_str = re.sub(r'[^\w\s]', ' ', title)
-    # 2. Spaces ya multiple underscores ko single underscore se replace karo
+    # 2. Replace spaces or multiple underscores with a single underscore
     clean_str = re.sub(r'[\s_]+', '_', clean_str)
-    # 3. Lowercase mein convert karo aur surrounding underscores strip karo
+    # 3. Convert to lowercase and strip surrounding underscores
     clean_str = clean_str.strip('_').lower()
-    
+
     return clean_str if clean_str else "untitled_ebook"
+
 
 def get_unique_folder_path(base_dir, folder_name):
     target_path = os.path.join(base_dir, folder_name)
@@ -31,6 +35,7 @@ def get_unique_folder_path(base_dir, folder_name):
             return new_target_path
         i += 1
 
+
 def move_ebook_contents(dest_folder):
     if not os.path.exists(EBOOK_DIR):
         print(f"Warning: Source directory '{EBOOK_DIR}' does not exist. No files moved.")
@@ -42,8 +47,9 @@ def move_ebook_contents(dest_folder):
         src_path = os.path.join(EBOOK_DIR, item)
         dest_path = os.path.join(dest_folder, item)
         shutil.move(src_path, dest_path)
-    
+
     print(f"Successfully moved all contents from '{EBOOK_DIR}' to '{dest_folder}'.")
+
 
 def mark_idea_as_published(title_to_match):
     if not os.path.exists(IDEAS_FILE_PATH):
@@ -55,7 +61,7 @@ def mark_idea_as_published(title_to_match):
 
     updated = False
 
-    # Target dictionary key ke andar hi "ebook_published": True set karo
+    # Set "ebook_published": True inside the matching title object
     for item in ideas_data:
         if item.get("title") == title_to_match:
             item["ebook_published"] = True
@@ -68,6 +74,7 @@ def mark_idea_as_published(title_to_match):
         print(f"Updated '{IDEAS_FILE_PATH}': Set 'ebook_published': true inside object for '{title_to_match}'.")
     else:
         print(f"Note: Title '{title_to_match}' not found in {IDEAS_FILE_PATH}.")
+
 
 def reset_ebook_status():
     if not os.path.exists(STATUS_FILE_PATH):
@@ -92,25 +99,25 @@ def reset_ebook_status():
         "gumroad_uploaded"
     ]
 
-    # Verify if all 7 target flags are True
+    # Verify if all target flags are True
     all_true = all(status_map.get(key) is True for key in required_keys)
 
     if all_true:
         raw_title = status_map.get("title", "")
         clean_name = get_clean_folder_name(raw_title)
-        
-        # Step 1: 'published' directory ke andar unique target folder path generate karo
+
+        # Step 1: Generate a unique target folder path inside the 'published' directory
         os.makedirs(PUBLISHED_DIR, exist_ok=True)
         unique_target_path = get_unique_folder_path(PUBLISHED_DIR, clean_name)
 
-        # Step 2: 'ebook' folder ka content move karo
+        # Step 2: Move the 'ebook' folder content
         move_ebook_contents(unique_target_path)
 
-        # Step 3: 'ebook_ideas.json' mein matching title object ke andar "ebook_published": true add karo
+        # Step 3: Add "ebook_published": true inside the matching title object in 'ebook_ideas.json'
         if raw_title:
             mark_idea_as_published(raw_title)
 
-        # Step 4: Reset target flags to False & clear claude_url and title
+        # Step 4: Reset target flags to False and clear claude_url and title
         for item in data:
             for key in item:
                 if key in required_keys:
@@ -118,13 +125,14 @@ def reset_ebook_status():
                 elif key in ["claude_url", "title"]:
                     item[key] = ""
 
-        # Step 5: Updated status JSON save karo
+        # Step 5: Save the updated status JSON
         with open(STATUS_FILE_PATH, "w") as file:
             json.dump(data, file, indent=2)
 
-        print("All 8 flags were True. Content moved, ideas updated, and status JSON successfully reset!")
+        print("All flags were True. Content moved, ideas updated, and status JSON successfully reset!")
     else:
         print("Condition not met (at least one flag is False). No actions taken.")
+
 
 if __name__ == "__main__":
     reset_ebook_status()

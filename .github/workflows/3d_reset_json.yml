@@ -1,7 +1,7 @@
 name: 3D. Reset JSON
 
-on: 
-  workflow_dispatch: 
+on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["3C. Gumroad Upload"]
     types:
@@ -38,13 +38,18 @@ jobs:
       run: |
         git pull --rebase
 
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
     - name: Run Reset JSON Script
       run: |
         python reset_json.py
 
     - name: Commit and Push Cleaned/Reset Files
       run: |
-        # Saare modified, untracked aur moved files ko stage karein
+        # Stage all modified, untracked and moved files
         git add -A
 
         if git diff --staged --quiet; then
@@ -53,7 +58,7 @@ jobs:
           echo "[OK] Changes detected. Committing and pushing updates..."
           git commit -m "Automated: Move published ebook files and reset status/ideas JSON [skip ci]"
           
-          # Unstaged working directory ko clean/stash karein taaki rebase fail na ho
+          # Clean/stash the unstaged working directory so rebase does not fail
           git stash --include-untracked
 
           # Pull with rebase

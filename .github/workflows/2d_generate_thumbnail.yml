@@ -1,7 +1,7 @@
 name: 2D. Generate Thumbnail
 
-on: 
-  workflow_dispatch: 
+on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["2C. Generate Banner"]
     types:
@@ -40,50 +40,59 @@ jobs:
 
       - name: Install and Start Cloudflare WARP (TUN Global Mode)
         run: |
-          # 1. Repository aur GPG Key set karein
+          # 1. Add repository and GPG key
           curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
           echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
           
           # 2. Install
           sudo apt-get update && sudo apt-get install -y cloudflare-warp
           
-          # 3. Start Service
+          # 3. Start service
           sudo systemctl start warp-svc
           sleep 2
           
-          # 4. Register (New CLI Syntax compatible)
+          # 4. Register (new CLI syntax compatible)
           warp-cli --accept-tos registration new || warp-cli registration new
           
-          # 5. STRICT FIX: Mode ko PROXY se badal kar TUN (Standard VPN) karein
+          # 5. Switch mode from PROXY to TUN (standard VPN)
           warp-cli --accept-tos mode warp || warp-cli mode warp
           
           # 6. Connect
           warp-cli --accept-tos connect || warp-cli connect
           sleep 5
           
-          # 7. Verify ki pure system ka IP change hua ya nahi
+          # 7. Verify system IP
           curl https://cloudflare.com/cdn-cgi/trace
 
       - name: Install Dependencies & Xvfb
         run: |
           sudo apt-get update && sudo apt-get install -y xvfb
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install browser-use playwright playwright-stealth cryptography python-dotenv
+          pip install -r requirements.txt
           playwright install chromium
 
       - name: Run Python Script with Xvfb
         env:
           DECRYPT_KEY: ${{ secrets.DECRYPT_KEY }}
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
           xvfb-run --auto-servernum python generate_thumbnail.py
 
+      - name: Upload Error Screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-thumbnail-error
+          path: error/error_screenshot.png
+          if-no-files-found: ignore
+
       - name: Commit and Push Generated Thumbnail & States
         run: |
-          # Check karein ki files exist karti hain ya nahi tabhi unhe add karein
+          # Only add files that actually exist
           [ -f "ebook/thumbnail.png" ] && git add ebook/thumbnail.png
-          [ -f "ebook_status.json" ] && git add ebook_status.json
+          [ -f "json/ebook_status.json" ] && git add json/ebook_status.json
+          [ -d "locators" ] && git add locators/
+          [ -f "json/config.json" ] && git add json/config.json
           
           if git diff --staged --quiet; then
             echo "[INFO] No changes detected in thumbnail or status. Skipping push."
@@ -91,7 +100,7 @@ jobs:
             echo "[OK] Changes detected. Committing and pushing updates..."
             git commit -m "Automated: Update generated thumbnail image and status [skip ci]"
             
-            # Conflict hone par workflow wali latest file ko preference di jayegi (-X theirs)
+            # On conflict, prefer the workflow's latest file (-X theirs)
             git pull origin ${GITHUB_REF_NAME} --rebase -X theirs || git rebase --skip
             
             git push origin ${GITHUB_REF_NAME}

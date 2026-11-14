@@ -1,0 +1,82 @@
+# ============================================================
+# Amazon KDP Locators (kdp.amazon.com)
+# Format: variable_name = playwright_expression
+# Edit values here; every Python file references these names.
+# ============================================================
+
+# --- Bookshelf / create flow ---
+kdp_create_new_title_link = page.get_by_role("link", name="+ Create new title or series")
+kdp_create_ebook_button = page.get_by_role("button", name="Create eBook")
+
+# --- Password verification prompt ---
+kdp_password_textbox = page.get_by_role("textbox", name="Password")
+kdp_sign_in_button = page.get_by_role("button", name="Sign in", exact=True)
+kdp_password_confirm_button = page.locator('input[aria-labelledby="pow-confirm-button-announce"]')
+
+# --- Language selector ---
+kdp_language_dropdown_button = page.get_by_role("button", name="language-dropdown")
+
+# --- eBook details page ---
+kdp_title_input = page.locator("#data-title")
+kdp_subtitle_input = page.locator("#data-subtitle")
+kdp_author_first_name_input = page.locator("#data-primary-author-first-name")
+kdp_author_last_name_input = page.locator("#data-primary-author-last-name")
+
+# --- Description rich text editor ---
+kdp_description_editor_frame = page.frame_locator('iframe[title="Rich Text Editor, editor1"]').locator("body")
+
+# --- Publishing rights ---
+kdp_own_copyright_radio = page.get_by_role("radio", name="I own the copyright and I")
+
+# --- Explicit content ---
+kdp_not_explicit_radio = page.get_by_role("radio", name="No")
+
+# --- Marketplace ---
+kdp_marketplace_dropdown = page.locator("#data-digital-home-marketplace-home span").nth(1)
+kdp_marketplace_amazon_com_option = page.get_by_role("option", name="Amazon.com", exact=True)
+
+# --- Categories ---
+kdp_choose_categories_button = page.get_by_role("button", name="Choose categories")
+kdp_category_select_one_span = page.locator("span").filter(has_text="Select one").nth(2)
+kdp_category_scroll_container = page.locator(".a-popover-inner.a-lgtbox-vertical-scroll")
+kdp_category_target_link = page.locator("xpath=/html[1]/body[1]/div[7]/div[1]/div[1]/ul[1]/li[29]/a[1]")
+kdp_save_categories_button = page.get_by_role("button", name="Save categories")
+
+# --- Release ---
+kdp_ready_to_release_button = page.get_by_role("button", name="I am ready to release my book")
+kdp_save_and_continue_button = page.get_by_role("button", name="Save and Continue")
+
+# --- Dynamic locators (format placeholders filled at runtime) ---
+kdp_category_text_template = lambda category: page.get_by_text(category, exact=True)
+kdp_keyword_input_template = "#data-keywords-{index}"
+
+# --- Manuscript upload ---
+kdp_upload_manuscript_button = page.get_by_role("button", name="Upload manuscript")
+kdp_continue_with_pdf_button = page.get_by_role("button", name="Continue with PDF")
+
+# --- DRM ---
+kdp_apply_drm_radio = page.get_by_role("radio", name="Yes, apply Digital Rights")
+
+# --- Cover upload ---
+kdp_upload_cover_choose_button = page.get_by_role("button", name="Upload a cover you already")
+kdp_upload_cover_file_button = page.get_by_role("button", name="Upload your cover file")
+
+# --- AI disclosure ---
+kdp_ai_disclosure_yes_link = page.get_by_role("link", name="Yes")
+kdp_ai_texts_label = page.get_by_label("Texts", exact=True).locator("span").nth(2)
+kdp_ai_texts_some_sections_option = page.get_by_role("option", name="Some sections, with extensive")
+kdp_ai_texts_tool_placeholder = page.get_by_placeholder("e.g. ChatGPT")
+kdp_ai_images_label = page.get_by_label("Images", exact=True).locator("span").nth(2)
+kdp_ai_images_one_or_few_option = page.get_by_role("option", name="One or a few AI-generated images, with minimal or no editing")
+kdp_ai_images_tool_placeholder = page.get_by_placeholder("e.g. DALL-E")
+kdp_ai_translations_label = page.get_by_label("Translations", exact=True).locator("span").nth(2)
+kdp_ai_translations_none_option = page.get_by_role("option", name="None")
+kdp_ai_confirm_checkbox = page.get_by_role("checkbox", name="By clicking this, I confirm")
+
+# --- Pricing & rights ---
+kdp_all_territories_button = page.get_by_role("button", name="All territories (worldwide")
+kdp_royalty_70_label_icon = page.locator("label").filter(has_text="70%").locator("i")
+kdp_price_input = page.locator('input[name="data[digital][channels][amazon][US][price_vat_inclusive]"]')
+
+# --- Publish ---
+kdp_publish_button = page.get_by_role("button", name="Publish Your Kindle eBook")

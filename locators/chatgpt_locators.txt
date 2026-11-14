@@ -1,0 +1,42 @@
+# ============================================================
+# ChatGPT Locators (chatgpt.com)
+# Format: variable_name = playwright_expression
+# Edit values here; every Python file references these names.
+# ============================================================
+
+# --- Chat composer / input ---
+chatgpt_composer_plus_button = page.get_by_test_id("composer-plus-btn")
+chatgpt_composer_plus_button = page.get_by_role("button", name="Add files and more")
+chatgpt_upload_from_computer_text = page.get_by_text("Upload from computer")
+chatgpt_chat_textbox = page.get_by_role("textbox", name="Chat with ChatGPT")
+chatgpt_chat_textbox = page.get_by_role("textbox", name="Ask ChatGPT")
+chatgpt_chat_textbox_fallback_ask = page.get_by_role("textbox", name="Ask ChatGPT")
+chatgpt_contenteditable_textbox = page.locator('div[contenteditable="true"]')
+chatgpt_prompt_textarea = page.locator("#prompt-textarea")
+chatgpt_file_input = page.locator('input[type="file"]')
+chatgpt_send_button = page.get_by_test_id("send-button")
+chatgpt_send_button = page.get_by_role("button", name="Send")
+
+# --- Assistant response containers (ordered fallback chain) ---
+chatgpt_response_selectors = [
+    'div[data-message-author-role="assistant"] pre code',
+    'div[data-message-author-role="assistant"] pre',
+    'div[data-message-author-role="assistant"] .markdown',
+    'div[data-message-author-role="assistant"]',
+    'pre code',
+    'pre'
+]
+
+# --- Image generation flow ---
+chatgpt_skip_button = page.get_by_role("button", name="Skip")
+chatgpt_share_image_button = page.get_by_role("button", name="Share this image")
+chatgpt_share_image_button = page.get_by_role("button", name="Share generated image")
+chatgpt_open_preview_button = page.get_by_role("button", name="Open preview of")
+chatgpt_image_this_image_menuitem = page.get_by_role("menuitem", name="This image")
+chatgpt_image_download_button = page.get_by_role("button", name="Download")
+chatgpt_image_download_file_button = page.get_by_role("button", name="Download file")
+chatgpt_generated_image_button = page.get_by_role("button", name=re.compile(r"Generated image:.*", re.IGNORECASE))
+
+# --- Dynamic locators (built at runtime) ---
+chatgpt_image_option_template = lambda number: page.locator("div").filter(has_text=re.compile(r"^" + str(number) + r"Image " + str(number) + r"Image " + str(number) + r" is better$")).get_by_label("")
+chatgpt_composer_upload_option = page.locator('div').filter(has_text=re.compile(r'^Add photos & filesUpload from computer$', re.IGNORECASE)).nth(2)

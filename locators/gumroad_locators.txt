@@ -1,0 +1,33 @@
+# ============================================================
+# Gumroad Locators (app.gumroad.com)
+# Format: variable_name = playwright_expression
+# Edit values here; every Python file references these names.
+# ============================================================
+
+# --- Product creation ---
+gumroad_new_product_link = page.get_by_role("link", name="New product")
+gumroad_name_textbox = page.get_by_role("textbox", name="Name")
+gumroad_ebook_radio = page.get_by_role("radio", name="E-book E-book Offer a book or")
+gumroad_price_textbox = page.get_by_role("textbox", name="Price")
+gumroad_next_customize_button = page.get_by_role("button", name="Next: Customize")
+
+# --- Customize details & media ---
+gumroad_description_label = page.get_by_label("Description")
+gumroad_url_textbox = page.get_by_role("textbox", name="URL")
+gumroad_upload_images_button = page.get_by_role("button", name="Upload images or videos")
+gumroad_computer_files_tab = page.get_by_role("tab", name="Computer files")
+gumroad_upload_text = page.get_by_text("Upload")
+gumroad_save_and_continue_button = page.get_by_role("button", name="Save and continue")
+
+# --- Content / file upload ---
+gumroad_upload_files_button = page.get_by_role("button", name="Upload your files")
+gumroad_computer_files_menuitem = page.get_by_role("menuitem", name="Computer files")
+gumroad_save_changes_button = page.get_by_role("button", name="Save changes")
+
+# --- Receipt configuration ---
+gumroad_receipt_tab = page.get_by_role("tab", name="Receipt")
+gumroad_button_text_textbox = page.get_by_role("textbox", name="Button text")
+gumroad_custom_message_textbox = page.get_by_role("textbox", name="Custom message")
+
+# --- Publish ---
+gumroad_publish_and_continue_button = page.get_by_role("button", name="Publish and continue")

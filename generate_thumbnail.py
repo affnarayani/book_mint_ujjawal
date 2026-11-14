@@ -1,177 +1,57 @@
-import os
-import sys
-import json
-import base64
+﻿import base64
 import random
-import asyncio
-import shutil
-import warnings
+import sys
 from pathlib import Path
-from dotenv import load_dotenv
 
-# Ignore all warnings
-warnings.filterwarnings("ignore")
-
-load_dotenv()
-DECRYPT_KEY = os.getenv("DECRYPT_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-
-if GOOGLE_API_KEY:
-    os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
-
-HEADLESS = False
-ROOT_DIR = os.path.dirname(__file__)
-COOKIES_DIR = os.path.join(ROOT_DIR, "cookies")
-IMAGE_OUTPUT_DIR = os.path.join(ROOT_DIR, "ebook")
-ERROR_SCREENSHOT = os.path.join(ROOT_DIR, "error_screenshot.png")
-STATUS_FILE = Path(os.path.join(ROOT_DIR, "ebook_status.json"))
-CDP_PORT = 9222
-
-# =========================
-# SECURE STREAM (Masking Secrets)
-# =========================
-class SecureStream:
-    def __init__(self, original_stream):
-        self.original_stream = original_stream
-        self.sensitive_words = [v for v in [DECRYPT_KEY, GOOGLE_API_KEY] if v]
-
-    def write(self, message):
-        if message:
-            for word in self.sensitive_words:
-                message = message.replace(word, "[REDACTED_SECRET]")
-            if "proactor_events.py" in message or "I/O operation on closed pipe" in message:
-                return
-        try:
-            self.original_stream.write(message)
-        except Exception:
-            pass
-
-    def flush(self):
-        try:
-            self.original_stream.flush()
-        except Exception:
-            pass
-
-sys.stdout = SecureStream(sys.stdout)
-sys.stderr = SecureStream(sys.stderr)
-
-from browser_use import Agent, ChatGoogle, Browser
-from playwright.async_api import async_playwright, Page
+from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth
 
-# --- CRYPTOGRAPHY IMPORTS ---
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from common.common import (
+    BROWSER_CFG,
+    RETRY_CFG,
+    load_cookies,
+    load_locators,
+    load_status,
+    major_wait,
+    minor_wait,
+    path,
+    report_error_and_upload,
+    save_status,
+    update_status_value,
+    get_status_value,
+)
+from common.gemini_vision import resolve_locator
+
+# =========================
+# CONFIG
+# =========================
+HEADLESS = BROWSER_CFG["headless"]
+USER_AGENT = BROWSER_CFG["user_agent"]
+LAUNCH_ARGS = BROWSER_CFG["launch_args"]
+GRANT_PERMISSIONS = BROWSER_CFG["grant_permissions"]
+
+CHATGPT_COOKIES_DIR = path("chatgpt_cookies_dir")
+STATUS_FILE = path("ebook_status")
+
+INPUT_COVER_PNG = path("ebook_cover_png")
+OUTPUT_THUMBNAIL_PNG = path("ebook_thumbnail_png")
+
+MAX_RETRIES = RETRY_CFG["thumbnail_max_retries"]
+MAX_REFRESH_CYCLES = RETRY_CFG["thumbnail_max_refresh_cycles"]
+CHATGPT_URL = "https://chatgpt.com/"
 
 
 # =========================
-# EBOOK STATUS HELPERS
+# MAIN EXECUTION
 # =========================
-def load_status():
-    if not STATUS_FILE.exists():
-        raise FileNotFoundError(f"❌ '{STATUS_FILE}' not found!")
-    with STATUS_FILE.open("r", encoding="utf-8") as f:
-        return json.load(f)
+def run():
+    print(f"--- Starting Thumbnail Generation Process (HEADLESS={HEADLESS}) ---", flush=True)
 
-def save_status(data):
-    with STATUS_FILE.open("w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-def get_status_value(status_list, key_name):
-    for item in status_list:
-        if key_name in item:
-            return item[key_name]
-    return None
-
-def update_status_value(status_list, key_name, new_value):
-    updated = False
-    for item in status_list:
-        if key_name in item:
-            item[key_name] = new_value
-            updated = True
-            break
-    if not updated:
-        status_list.append({key_name: new_value})
-
-
-# =========================
-# CRYPTO & COOKIES HELPERS
-# =========================
-def _derive_key_from_password(password: bytes, salt: bytes) -> bytes:
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=salt,
-        iterations=200_000,
-    )
-    return kdf.derive(password)
-
-def _decrypt_payload(payload: dict, password: str) -> bytes:
-    try:
-        salt = base64.b64decode(payload["s"])
-        nonce = base64.b64decode(payload["n"])
-        ct = base64.b64decode(payload["ct"])
-        
-        key = _derive_key_from_password(password.encode("utf-8"), salt)
-        aesgcm = AESGCM(key)
-        
-        plaintext = aesgcm.decrypt(nonce, ct, None)
-        return plaintext
-    except Exception as e:
-        raise ValueError(f"Decryption failed: {e}")
-
-def get_random_decrypted_cookies(password: str) -> list:
-    if not os.path.exists(COOKIES_DIR):
-        raise FileNotFoundError(f"Directory '{COOKIES_DIR}' not found.")
-    
-    encrypted_files = [f for f in os.listdir(COOKIES_DIR) if f.endswith(".encrypted")]
-    if not encrypted_files:
-        raise FileNotFoundError(f"No encrypted cookie files found in '{COOKIES_DIR}'.")
-    
-    chosen_file = random.choice(encrypted_files)
-    file_path = os.path.join(COOKIES_DIR, chosen_file)
-    print(f"[STEP] Selected encrypted cookie file: {chosen_file}", flush=True)
-    
-    with open(file_path, "r", encoding="utf-8") as f:
-        payload = json.load(f)
-        
-    decrypted_bytes = _decrypt_payload(payload, password)
-    cookies_data = json.loads(decrypted_bytes.decode("utf-8"))
-    
-    return cookies_data
-
-async def check_login(page: Page) -> bool:
-    try:
-        profile_menu = page.get_by_role('button', name='Open profile menu')
-        upgrade_btn = page.get_by_role('button', name='Upgrade', exact=True)
-        
-        await profile_menu.or_(upgrade_btn).first.wait_for(state="visible", timeout=20000)
-        return True
-    except Exception:
-        return False
-
-
-# =========================
-# MAIN RUNNER
-# =========================
-async def main():
-    print("[START] Image generator script initialized", flush=True)
-    
-    if not DECRYPT_KEY:
-        print("[ERROR] DECRYPT_KEY is missing in environment/.env", flush=True)
-        sys.exit(1)
-
-    # Status check load karein
-    try:
-        status_data = load_status()
-    except Exception as e:
-        print(f"[ERROR] {e}", flush=True)
-        sys.exit(1)
-
+    status_data = load_status(STATUS_FILE)
     banner_generated = get_status_value(status_data, "banner_generated")
     thumbnail_generated = get_status_value(status_data, "thumbnail_generated")
 
+    # Guard condition: banner_generated must be True AND thumbnail_generated must be False/None
     if not banner_generated:
         print("[INFO] 'banner_generated' is not True. Cannot generate thumbnail yet. Exiting safely.", flush=True)
         sys.exit(0)
@@ -180,160 +60,230 @@ async def main():
         print("[INFO] 'thumbnail_generated' is already True. Exiting safely.", flush=True)
         sys.exit(0)
 
-    prompt_text = "Convert this attached image into a 1254x1254 1:1 ratio square thumbnail."
-    print(f"[STEP] Prompt being used: {prompt_text}", flush=True)
+    if not INPUT_COVER_PNG.exists():
+        raise FileNotFoundError(f"Required input cover file not found at '{INPUT_COVER_PNG}'!")
 
-    INPUT_COVER_PNG = os.path.join(ROOT_DIR, "ebook", "cover.png")
-    if not os.path.exists(INPUT_COVER_PNG):
-        print(f"[ERROR] Required input cover file not found at '{INPUT_COVER_PNG}'!", flush=True)
-        sys.exit(1)
+    prompt_text = "Please convert this attached image into a 1254x1254 1:1 ratio square thumbnail."
+    print(f"[OK] Prompt:\n{prompt_text}\n", flush=True)
 
-    try:
-        cookies = get_random_decrypted_cookies(DECRYPT_KEY)
-    except Exception as e:
-        print(f"[ERROR] Error loading/decrypting cookies: {e}", flush=True)
-        sys.exit(1)
+    encrypted_files = list(CHATGPT_COOKIES_DIR.glob("*.encrypted"))
+    if not encrypted_files:
+        raise RuntimeError(f"No .encrypted cookie files found in '{CHATGPT_COOKIES_DIR.name}/' folder")
 
-    os.makedirs(IMAGE_OUTPUT_DIR, exist_ok=True)
-    final_image_path = os.path.join(IMAGE_OUTPUT_DIR, "thumbnail.png")
+    chatgpt_cookies_file = random.choice(encrypted_files)
+    print(f"[OK] Randomly selected cookie file: {chatgpt_cookies_file.name}", flush=True)
 
-    # 1. Playwright setup with CDP port
+    cookies = load_cookies(Path(chatgpt_cookies_file))
+
     stealth = Stealth()
-    pw_cm = stealth.use_async(async_playwright())
-    pw_instance = await pw_cm.__aenter__()
+    pw_cm = stealth.use_sync(sync_playwright())
+    pw = pw_cm.__enter__()
 
-    browser_instance = await pw_instance.chromium.launch(
-        headless=HEADLESS,
-        args=[
-            "--start-maximized",
-            f"--remote-debugging-port={CDP_PORT}",
-            "--disable-blink-features=AutomationControlled",
-            "--no-sandbox",
-            "--disable-setuid-sandbox"
-        ]
-    )
-    
-    context = await browser_instance.new_context(
-        no_viewport=True,
-        accept_downloads=True,  # Downloads explicitly enabled
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-    )
-    
-    await context.add_cookies(cookies)
-    page = await context.new_page()
-
-    print("[STEP] Navigating to ChatGPT with cookies...", flush=True)
-    await page.goto("https://chatgpt.com/", timeout=60000)
-    
-    print("[STEP] Verifying login status...", flush=True)
-    is_logged_in = await check_login(page)
-
-    if not is_logged_in:
-        print("[ERROR] Cookie login failed: Required login/profile buttons not found.", flush=True)
-        await browser_instance.close()
-        await pw_cm.__aexit__(None, None, None)
-        sys.exit(1)
-    else:
-        print("[STEP] Opening attachment menu and attaching file...", flush=True)
-        try:
-            async with page.expect_file_chooser() as fc_info:
-                # 1. Pehle 'Add files and more' button par click karein
-                await page.get_by_role('button', name='Add files and more').click()
-                
-                # 2. Fir 'Add photos & files Upload' button par click karein
-                await page.get_by_role('button', name='Add photos & files Upload').click()
-            
-            # OS window open kiye bina direct file set karein
-            file_chooser = await fc_info.value
-            await file_chooser.set_files(str(Path(INPUT_COVER_PNG).resolve()))
-            print("[OK] Attached ebook/cover.png successfully.", flush=True)
-            
-        except Exception as e:
-            print(f"[ERROR] Failed to attach file: {e}", flush=True)
-            raise e
-    
-    print("[SUCCESS] Cookie login verified successfully! Attaching browser-use via CDP...", flush=True)
-
-    # 2. Browser-use Agent setup
-    llm = ChatGoogle(model="gemini-3.5-flash-lite")
-
-    task_prompt = f"""
-    1. You are already on the active ChatGPT authenticated page with the image attached.
-    2. Find the message input textarea/box.
-    3. Type this exact prompt into it and submit: '{prompt_text}'
-    4. Wait patiently for ChatGPT to generate and render the image completely.
-    5. Click on the generated image to open its preview/modal view.
-    6. Locate the share button and then the download button to download the image OR directly locate the download button, if available.
-    7. Make sure the generated image has been downloaded successfully.
-    """
-
-    downloaded_file_path = None
-
-    async def handle_download(download):
-        nonlocal downloaded_file_path
-        temp_path = await download.path()
-        if temp_path:
-            downloaded_file_path = temp_path
-            print(f"[DOWNLOAD DETECTED] Temp path: {temp_path}", flush=True)
-
-    context.on("download", handle_download)
-
+    browser = None
+    page = None
     try:
-        custom_browser = Browser(cdp_url=f"http://localhost:{CDP_PORT}")
+        browser = pw.chromium.launch(headless=HEADLESS, args=LAUNCH_ARGS)
 
-        agent = Agent(
-            task=task_prompt,
-            llm=llm,
-            browser=custom_browser
-        )
+        context = browser.new_context(no_viewport=True, user_agent=USER_AGENT)
+        context.grant_permissions(GRANT_PERMISSIONS)
 
-        history = await agent.run()
-        
-        if not downloaded_file_path and hasattr(history, 'downloaded_files') and history.downloaded_files():
-            downloaded_file_path = history.downloaded_files()[-1]
+        print("[STEP] Adding cookies to browser context...", flush=True)
+        context.add_cookies(cookies)
 
-        if downloaded_file_path and os.path.exists(downloaded_file_path):
-            shutil.copy(downloaded_file_path, final_image_path)
-            print(f"\n[SUCCESS] Image successfully captured and saved to: {final_image_path}")
-            
-            # Status update karein aur save karein
-            update_status_value(status_data, "thumbnail_generated", True)
-            save_status(status_data)
-            print("✅ 'thumbnail_generated' successfully set to True in ebook_status.json!", flush=True)
+        page = context.new_page()
+        print("[OK] Cookies added successfully", flush=True)
+
+        loc = load_locators("chatgpt", page)
+
+        print("[STEP] Opening ChatGPT Main URL...", flush=True)
+        page.goto(CHATGPT_URL, wait_until="load")
+        major_wait()
+
+        # Upload image attachment
+        print("[STEP] Attaching ebook/cover.png...", flush=True)
+        file_input = resolve_locator(page, loc.chatgpt_file_input, "file input element")
+        if file_input is not None and file_input.count() > 0:
+            file_input.first.set_input_files(str(INPUT_COVER_PNG.resolve()))
+            print("[OK] Attached ebook/cover.png successfully.", flush=True)
+            minor_wait()
         else:
-            print(f"\n[ERROR] Downloaded file could not be tracked or found.", flush=True)
-            sys.exit(1)
+            raise RuntimeError("Could not find file input element to attach PNG.")
+
+        # Locate chat box
+        print("[STEP] Locating chat textbox...", flush=True)
+        chat_box = resolve_locator(page, loc.chatgpt_chat_textbox, "Chat with ChatGPT textbox")
+        if chat_box is None:
+            chat_box = resolve_locator(page, loc.chatgpt_chat_textbox_fallback_ask, "Ask ChatGPT textbox")
+        if chat_box is None:
+            chat_box = resolve_locator(page, loc.chatgpt_contenteditable_textbox, "contenteditable chat textbox")
+        if chat_box is None:
+            chat_box = resolve_locator(page, loc.chatgpt_prompt_textarea, "prompt textarea")
+
+        if chat_box is None:
+            raise RuntimeError("Could not locate the ChatGPT chat textbox.")
+
+        chat_box.click()
+        print("[OK] Textbox located and clicked successfully.", flush=True)
+
+        print("[STEP] Filling prompt into ChatGPT...", flush=True)
+        # Use fill() instead of type(): type() sends a real Enter key for every
+        # newline, which submits the prompt before it is fully entered.
+        chat_box.fill(prompt_text)
+
+        page.keyboard.press("Enter")
+        print("[OK] Prompt submitted successfully.", flush=True)
+        major_wait()
+
+        found_share = False
+        image_downloaded_successfully = False
+        refresh_cycle = 0
+
+        while refresh_cycle < MAX_REFRESH_CYCLES and not found_share:
+            if refresh_cycle > 0:
+                print(f"[STEP] Refreshing same page (Refresh attempt {refresh_cycle}/{MAX_REFRESH_CYCLES})...", flush=True)
+                page.reload(wait_until="load")
+                major_wait()
+
+            for attempt in range(1, MAX_RETRIES + 1):
+                print(f"[STEP] Waiting for thumbnail generation... Attempt {attempt}/{MAX_RETRIES} (Refresh Cycle {refresh_cycle})", flush=True)
+                major_wait()
+
+                # Skip or Preference logic
+                try:
+                    skip_button = resolve_locator(page, loc.chatgpt_skip_button, "Skip button")
+                    if skip_button is not None and skip_button.is_visible():
+                        print("[INFO] 'Skip' button detected! Clicking 'Skip'...", flush=True)
+                        skip_button.click()
+                        minor_wait()
+
+                        option_1 = loc.chatgpt_image_option_template(1)
+                        option_2 = loc.chatgpt_image_option_template(2)
+
+                        if option_1.first.is_visible() or option_2.first.is_visible():
+                            chosen_option = random.choice([option_1, option_2])
+                            if chosen_option.first.is_visible():
+                                chosen_option.first.click()
+                                minor_wait()
+                except Exception:
+                    pass
+
+                # Detect 'Share this image' / 'Open preview' button
+                try:
+                    share_button = resolve_locator(page, loc.chatgpt_share_image_button, "Share this image button")
+                    if share_button is None:
+                        share_button = resolve_locator(page, loc.chatgpt_open_preview_button, "Open preview button")
+                    if share_button is not None and share_button.is_visible():
+                        print("[OK] 'Share this image' button located successfully!", flush=True)
+                        share_button.click()
+                        print("[STEP] Clicked 'Share this image' button.", flush=True)
+                        minor_wait()
+                        found_share = True
+                        break
+                except Exception as e:
+                    print(f"[DEBUG] Could not click share button yet: {e}", flush=True)
+
+                if not found_share and attempt == 3 and refresh_cycle == 0:
+                    try:
+                        chat_box = resolve_locator(page, loc.chatgpt_chat_textbox, "Chat with ChatGPT textbox")
+                        if chat_box is None:
+                            chat_box = resolve_locator(page, loc.chatgpt_prompt_textarea, "prompt textarea")
+
+                        if chat_box is not None:
+                            chat_box.click()
+                            chat_box.fill("Please continue generating the image")
+                            page.keyboard.press("Enter")
+                            major_wait()
+                    except Exception:
+                        pass
+
+            if not found_share:
+                refresh_cycle += 1
+                if refresh_cycle < MAX_REFRESH_CYCLES:
+                    print(f"[WARNING] Share button failed to appear after {MAX_RETRIES} attempts. Refreshing page...", flush=True)
+
+        if not found_share:
+            raise RuntimeError("Image generation timed out or Share button failed to appear after multiple refreshes.")
+
+        # 'This image' menu item is optional: it only appears in some UI states.
+        # Do not use vision fallback for it; click only when the raw locator is
+        # actually visible, otherwise just move on.
+        this_image_menuitem = loc.chatgpt_image_this_image_menuitem
+        resolved_item = this_image_menuitem.resolve() if this_image_menuitem is not None else None
+        if resolved_item is not None and resolved_item.is_visible():
+            resolved_item.first.click()
+            minor_wait()
+
+        # Download Strategy: Direct Download Button
+        print("[STEP] Checking for Direct 'Download' button...", flush=True)
+        download_button = resolve_locator(page, loc.chatgpt_image_download_button, "Download button")
+        if download_button is None:
+            download_button = resolve_locator(page, loc.chatgpt_image_download_file_button, "Download file button")
+        direct_download_btn = download_button
+
+        if direct_download_btn is not None and direct_download_btn.is_visible():
+            try:
+                with page.expect_download(timeout=60000) as download_info:
+                    direct_download_btn.first.click(force=True)
+
+                download = download_info.value
+                download.save_as(OUTPUT_THUMBNAIL_PNG)
+                print(f"[OK] Thumbnail image downloaded: {OUTPUT_THUMBNAIL_PNG}", flush=True)
+                image_downloaded_successfully = True
+                major_wait()
+            except Exception as direct_dl_err:
+                print(f"[WARNING] Direct download failed, attempting container extract: {direct_dl_err}", flush=True)
+
+        # Fallback Strategy: Blob / Image extraction
+        if not image_downloaded_successfully:
+            try:
+                generated_image_btn = resolve_locator(
+                    page, loc.chatgpt_generated_image_button, "Generated image button"
+                )
+                if generated_image_btn is not None and generated_image_btn.is_visible():
+                    img_element = generated_image_btn.locator("img").first
+                    img_src = img_element.get_attribute("src")
+
+                    if img_src and img_src.startswith("blob:"):
+                        base64_data = page.evaluate("""async (url) => {
+                            const response = await fetch(url);
+                            const blob = await response.blob();
+                            return new Promise((resolve) => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                                reader.readAsDataURL(blob);
+                            });
+                        }""", img_src)
+                        with open(OUTPUT_THUMBNAIL_PNG, "wb") as fh:
+                            fh.write(base64.b64decode(base64_data))
+                        print(f"[OK] Thumbnail image extracted from Blob and saved: {OUTPUT_THUMBNAIL_PNG}", flush=True)
+                        image_downloaded_successfully = True
+            except Exception as fallback_err:
+                print(f"[WARNING] Image extraction failed: {fallback_err}", flush=True)
+
+        if image_downloaded_successfully:
+            update_status_value(status_data, "thumbnail_generated", True)
+            save_status(STATUS_FILE, status_data)
+            print("[OK] 'thumbnail_generated' successfully set to True in ebook_status.json!", flush=True)
+        else:
+            raise RuntimeError("Thumbnail image download terminated without saving.")
 
     except Exception as e:
-        print(f"[ERROR] Script crashed: {e}", flush=True)
-        try:
-            os.makedirs(os.path.dirname(ERROR_SCREENSHOT), exist_ok=True)
-            await page.screenshot(path=ERROR_SCREENSHOT, full_page=True)
-            print(f"[OK] Error screenshot captured: {ERROR_SCREENSHOT}", flush=True)
-        except Exception:
-            pass
+        print(f"[ERROR] {e}", flush=True)
+        report_error_and_upload(page)
         sys.exit(1)
-        
+
     finally:
+        if browser:
+            try:
+                browser.close()
+            except Exception:
+                pass
         try:
-            await browser_instance.close()
-        except:
-            pass
-        try:
-            await pw_cm.__aexit__(None, None, None)
-        except:
-            pass
-        try:
-            sys.stderr = open(os.devnull, 'w')
+            pw_cm.__exit__(None, None, None)
         except Exception:
             pass
-        print("Process Finished Cleanly.", flush=True)
+        print("[DONE] Script execution finished.", flush=True)
 
-    return 0
 
 if __name__ == "__main__":
-    try:
-        sys.exit(asyncio.run(main()))
-    except KeyboardInterrupt:
-        print("\nUser manually stopped the task.")
-        sys.exit(1)
+    run()

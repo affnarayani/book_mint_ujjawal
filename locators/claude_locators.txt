@@ -1,0 +1,25 @@
+# ============================================================
+# Claude Locators (claude.ai)
+# Format: variable_name = playwright_expression
+# Edit values here; every Python file references these names.
+# ============================================================
+
+# --- Token / quota exhaustion signals ---
+claude_out_of_free_messages_text = page.get_by_text("You are out of free messages(")
+claude_upgrade_heading = page.get_by_role("heading", name="Upgrade to keep chatting")
+claude_upgrade_notice_link = page.get_by_test_id("notice-region-slot-shift").get_by_role("link", name="Upgrade")
+
+# --- Chat composer ---
+claude_chat_input_box = page.get_by_test_id("chat-input")
+claude_chat_send_button = page.get_by_test_id("chat-input-send")
+
+# --- Generation monitoring ---
+claude_stop_response_button = page.get_by_role("button", name="Stop response")
+
+# --- Login verification ---
+claude_user_menu_button = page.get_by_test_id("user-menu-button")
+
+# --- Transcript download / continuation ---
+claude_transcript_download_button = page.get_by_test_id("transcript-sizer").get_by_role("button", name="Download")
+claude_download_label_button = page.get_by_label("Download", exact=True)
+claude_continue_button = page.get_by_role("button", name="Continue")
