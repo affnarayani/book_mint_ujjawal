@@ -1,27 +1,27 @@
 [
   {
-    "claude_url": ""
+    "claude_url": "https://claude.ai/chat/96699d95-6136-4f79-a9c4-98a5bcdb2e25"
   },
   {
-    "title": ""
+    "title": "The Minimal Wallet: How Fewer Purchases Build a Freer Life"
   },
   {
-    "ebook_downloaded": false
+    "ebook_downloaded": true
   },
   {
-    "details_generated": false
+    "details_generated": true
   },
   {
-    "cover_generated": false
+    "cover_generated": true
   },
   {
-    "banner_generated": false
+    "banner_generated": true
   },
   {
-    "thumbnail_generated": false
+    "thumbnail_generated": true
   },
   {
-    "pdf_merged": false
+    "pdf_merged": true
   },
   {
     "kdp_uploaded": false
