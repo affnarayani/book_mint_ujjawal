@@ -289,8 +289,8 @@ def run():
             f"REQUIRED OUTPUT JSON FORMAT:\n"
             f"```json\n"
             f"{{\n"
-            f'  "description_kdp": "Markdown formatted long description for Amazon KDP (Strictly around 500-600 words total, maximum 3000 characters)",\n'
-            f'  "description_gumroad": "Markdown formatted punchy description for Gumroad (Strictly around 250-300 words total, maximum 1500 characters)",\n'
+            f'  "description_kdp": "Markdown formatted long description for Amazon KDP (Strictly around 500-600 words total, maximum 2500 characters)",\n'
+            f'  "description_gumroad": "Markdown formatted punchy description for Gumroad (Strictly around 250-300 words total, maximum 1200 characters)",\n'
             f'  "subcategories": [\n'
             f'    "Subcategory 1",\n'
             f'    "Subcategory 2",\n'
