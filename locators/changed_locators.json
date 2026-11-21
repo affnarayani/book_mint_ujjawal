@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "platform": "claude",
+    "name": "claude_out_of_free_messages_text",
+    "broke_locator": "page.get_by_text(\"You are out of free messages(\")",
+    "suggested_locator": "page.locator('[data-testid=\"transcript-list\"]')",
+    "detected_at": "2026-11-21T02:44:57.194871+00:00"
+  }
+]
