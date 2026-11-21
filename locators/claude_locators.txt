@@ -6,6 +6,7 @@
 
 # --- Token / quota exhaustion signals ---
 claude_out_of_free_messages_text = page.get_by_text("You are out of free messages(")
+claude_out_of_free_messages_text = page.locator('[data-testid="transcript-list"]')
 claude_upgrade_heading = page.get_by_role("heading", name="Upgrade to keep chatting")
 claude_upgrade_notice_link = page.get_by_test_id("notice-region-slot-shift").get_by_role("link", name="Upgrade")
 
